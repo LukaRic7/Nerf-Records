@@ -1,4 +1,9 @@
-const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
+const {
+    SlashCommandBuilder,
+    InteractionContextType,
+    EmbedBuilder,
+    MessageFlags
+} = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
 
 function parseJournalTimestamp(value) {
@@ -45,7 +50,7 @@ module.exports = {
         ),
 
     async execute(interaction) {
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         const db = interaction.client.db;
         await NerfApi.refreshIfStale(db);
 
@@ -56,7 +61,13 @@ module.exports = {
                 interaction.options.getString('datetime', true)
             );
         } catch (error) {
-            await interaction.editReply({ content: error.message });
+            await interaction.editReply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0xffa500)
+                        .setDescription(error.message)
+                ]
+            });
             return;
         }
 
@@ -68,9 +79,13 @@ module.exports = {
             createdAt
         });
         await interaction.editReply({
-            content: deleted
-                ? 'Your note was deleted.'
-                : 'No note you wrote about that player was found at that timestamp.'
+            embeds: [
+                new EmbedBuilder()
+                    .setColor(deleted ? 0x00ff00 : 0xffa500)
+                    .setDescription(deleted
+                        ? 'Your note was deleted.'
+                        : 'No note you wrote about that player was found at that timestamp.')
+            ]
         });
     }
 };

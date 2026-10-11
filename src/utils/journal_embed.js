@@ -88,7 +88,7 @@ async function createJournalEmbed(db, player, identifier) {
                 inline: true
             },
             {
-                name: '⏱️ Stopwatch',
+                name: '⏱️ Playtime',
                 value: rankValue(
                     leaderboard?.playtime_rank,
                     leaderboard ? Math.floor(leaderboard.playtime_minutes / 60) : 0,

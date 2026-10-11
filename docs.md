@@ -14,6 +14,9 @@
 > Delete one of your notes about a player. Copy the timestamp shown in the journal, formatted
 > as `DD/MM/YY HHh` (for example, `21/11/26 21h`).
 
+In a direct message with the bot, the authorized owner can type `.refreshdb` to force a refresh
+of all leaderboard sources. The bot reports successful and failed sources in an embed.
+
 ## Nerf API (no cookie needed)
 
 The database refreshes leaderboard data when a source is more than 12 hours old. Failed

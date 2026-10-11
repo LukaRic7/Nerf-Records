@@ -165,6 +165,7 @@ async function refreshLeaderboards(db, sources) {
     console.log(
         `[Nerf API] Refreshed ${updatedSources.join(', ')}; upserted ${playerRows.length} players.`
     );
+    return { updatedSources, failedSources, playerCount: playerRows.length };
 }
 
 /**
@@ -200,7 +201,26 @@ async function refreshIfStale(db) {
         });
 }
 
+async function refreshDatabase(db) {
+    if (refreshInProgress) {
+        try {
+            await refreshInProgress;
+        } catch (error) {
+            console.error('[Nerf API] Refresh already in progress failed before manual retry:', error);
+        }
+    }
+
+    const refresh = refreshLeaderboards(db, SOURCES);
+    refreshInProgress = refresh;
+    try {
+        return await refresh;
+    } finally {
+        if (refreshInProgress === refresh) refreshInProgress = null;
+    }
+}
+
 module.exports = {
     getDiscordIdFromAvatar,
-    refreshIfStale
+    refreshIfStale,
+    refreshDatabase
 };

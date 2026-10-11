@@ -21,14 +21,20 @@ async function addAndShowJournal(interaction, db, player, playerName, note, isGo
         });
     } catch (error) {
         if (error.code === 'NOTE_COOLDOWN') {
-            await interaction.editReply({ content: error.message, embeds: [], components: [] });
+            await interaction.editReply({
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0xffa500)
+                        .setDescription(error.message)
+                ],
+                components: []
+            });
             return;
         }
         throw error;
     }
 
     await interaction.editReply({
-        content: '',
         embeds: [await createJournalEmbed(db, player, playerName)],
         components: []
     });
@@ -118,16 +124,22 @@ module.exports = {
 
         if (!confirmation) {
             await interaction.editReply({
-                content: 'Confirmation expired; no note was added.',
-                embeds: [],
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0xffa500)
+                        .setDescription('Confirmation expired; no note was added.')
+                ],
                 components: []
             });
             return;
         }
         if (confirmation.customId === `note-abort:${interaction.id}`) {
             await confirmation.update({
-                content: 'Note cancelled.',
-                embeds: [],
+                embeds: [
+                    new EmbedBuilder()
+                        .setColor(0x808080)
+                        .setDescription('Note cancelled.')
+                ],
                 components: []
             });
             return;

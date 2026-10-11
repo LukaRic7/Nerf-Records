@@ -1,13 +1,29 @@
-const { Client, GatewayIntentBits, Collection, MessageFlags } = require('discord.js');
+const {
+    Client,
+    GatewayIntentBits,
+    Collection,
+    MessageFlags,
+    EmbedBuilder,
+    Partials,
+    ChannelType
+} = require('discord.js');
 const fs = require('node:fs');
 const path = require('path');
  
 const CommandDeployer = require('./utils/deploy_commands.js');
 const DatabaseManager = require('./utils/database.js');
+const NerfApi = require('./utils/nerf_api.js');
 
+const REFRESH_COMMAND_USER_ID = '1212173699281592360';
 
 // Create the client instance
-const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.DirectMessages
+    ],
+    partials: [Partials.Channel]
+});
 
 // Load commands into a collection
 client.commands = new Collection();
@@ -43,12 +59,54 @@ client.on('interactionCreate', async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error(`[Commands] /${interaction.commandName} failed:`, error);
-        const content = 'The command could not be completed. Please try again later.';
+        const embed = new EmbedBuilder()
+            .setColor(0xff0000)
+            .setDescription('The command could not be completed. Please try again later.');
         if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ content, embeds: [], components: [] });
+            await interaction.editReply({ embeds: [embed], components: [] });
         } else {
-            await interaction.reply({ content, flags: MessageFlags.Ephemeral });
+            await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });
         }
+    }
+});
+
+client.on('messageCreate', async message => {
+    if (
+        message.author.id !== REFRESH_COMMAND_USER_ID
+        || message.author.bot
+        || message.channel.type !== ChannelType.DM
+        || message.content.trim() !== '.refreshdb'
+    ) {
+        return;
+    }
+
+    try {
+        if (!message.client.db) {
+            throw new Error('Database is not initialized');
+        }
+        const result = await NerfApi.refreshDatabase(message.client.db);
+        const embed = new EmbedBuilder()
+            .setColor(result.failedSources.length ? 0xffa500 : 0x00ff00)
+            .setTitle(result.failedSources.length
+                ? 'Database refreshed with errors'
+                : 'Database refreshed')
+            .setDescription([
+                `Updated: ${result.updatedSources.join(', ') || 'none'}`,
+                `Players upserted: ${result.playerCount}`,
+                ...(result.failedSources.length
+                    ? [`Failed (will retry on a later command): ${result.failedSources.join(', ')}`]
+                    : [])
+            ].join('\n'));
+        await message.reply({ embeds: [embed] });
+    } catch (error) {
+        console.error('[Commands] .refreshdb failed:', error);
+        await message.reply({
+            embeds: [
+                new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setDescription('The database refresh failed. Check the bot logs for details.')
+            ]
+        });
     }
 });
 
