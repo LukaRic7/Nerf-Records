@@ -5,8 +5,7 @@ const {
     MessageFlags,
     EmbedBuilder,
     Partials,
-    ChannelType,
-    MessageFlags
+    ChannelType
 } = require('discord.js');
 const fs = require('node:fs');
 const path = require('path');

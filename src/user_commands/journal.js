@@ -1,7 +1,8 @@
 const {
     SlashCommandBuilder,
     InteractionContextType,
-    EmbedBuilder
+    EmbedBuilder,
+    MessageFlags
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
 const { createJournalEmbed } = require('../utils/journal_embed.js');
