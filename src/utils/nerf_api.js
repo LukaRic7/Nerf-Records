@@ -18,6 +18,7 @@ function getDiscordIdFromAvatar(avatarUrl) {
 }
 
 async function fetchLeaderboard(source) {
+    console.log(`[Nerf API] Fetching ${source}`);
     const response = await fetch(new URL(source.path, API_BASE_URL), {
         signal: AbortSignal.timeout(150_000)
     });
