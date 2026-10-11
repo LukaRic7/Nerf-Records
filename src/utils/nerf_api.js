@@ -19,7 +19,7 @@ function getDiscordIdFromAvatar(avatarUrl) {
 
 async function fetchLeaderboard(source) {
     const response = await fetch(new URL(source.path, API_BASE_URL), {
-        signal: AbortSignal.timeout(30_000)
+        signal: AbortSignal.timeout(90_000)
     });
     if (!response.ok) {
         throw new Error(`${source.key} leaderboard returned HTTP ${response.status}`);
