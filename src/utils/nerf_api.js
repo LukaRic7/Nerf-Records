@@ -96,7 +96,9 @@ async function refreshLeaderboards(db, sources) {
                 || getDiscordIdFromAvatar(avatarUrl);
             const discord = discordId ? discordPlayers.get(discordId) : null;
             const player = players.get(steamId) ?? { steam_id: steamId };
-            player.steam_name = steamName;
+            if (!player.steam_name || source.key === 'kills') {
+                player.steam_name = steamName;
+            }
             player.discord_id = discordId ?? player.discord_id ?? null;
             player.discord_name = discord?.discord_name ?? player.discord_name ?? null;
             player.discord_avatar_url = avatarUrl ?? discord?.discord_avatar_url
