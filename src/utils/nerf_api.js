@@ -67,11 +67,12 @@ async function refreshLeaderboards(db, sources) {
     for (const { source, rows } of successful) {
         if (source.key !== 'meat' && source.key !== 'bones') continue;
         for (const row of rows) {
-            if (!row.discordId || !row.playerName) continue;
+            const discordName = row.playerName;
+            if (!row.discordId || !discordName) continue;
             const discordId = String(row.discordId);
             const player = discordPlayers.get(discordId) ?? {};
             player.discord_id = discordId;
-            player.discord_name = row.playerName;
+            player.discord_name = discordName;
             player.discord_avatar_url = row.discordAvatar ?? player.discord_avatar_url ?? null;
             discordPlayers.set(discordId, player);
         }
@@ -84,7 +85,8 @@ async function refreshLeaderboards(db, sources) {
     for (const { source, rows } of successful) {
         for (const row of rows) {
             if (source.key === 'meat' || source.key === 'bones') continue;
-            if (!row.steamId || !row.playerName) {
+            const steamName = row.playerName;
+            if (!row.steamId || !steamName) {
                 throw new Error(`${source.key} leaderboard contains a row without Steam identity`);
             }
 
@@ -94,7 +96,7 @@ async function refreshLeaderboards(db, sources) {
                 || getDiscordIdFromAvatar(avatarUrl);
             const discord = discordId ? discordPlayers.get(discordId) : null;
             const player = players.get(steamId) ?? { steam_id: steamId };
-            player.steam_name = row.playerName;
+            player.steam_name = steamName;
             player.discord_id = discordId ?? player.discord_id ?? null;
             player.discord_name = discord?.discord_name ?? player.discord_name ?? null;
             player.discord_avatar_url = avatarUrl ?? discord?.discord_avatar_url
