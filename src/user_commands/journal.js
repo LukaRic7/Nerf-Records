@@ -5,6 +5,7 @@ const {
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
 const { createJournalEmbed } = require('../utils/journal_embed.js');
+const { addDatabaseFooter } = require('../utils/database_footer.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -58,6 +59,8 @@ module.exports = {
                 `No Nerf player matched \`${identifier.replace(/[`<>]/g, '')}\`.\n\n`
                 + `Closest matches:\n${suggestionText}`
             );
-        await interaction.editReply({ embeds: [embed] });
+        await interaction.editReply({
+            embeds: [await addDatabaseFooter(embed, db)]
+        });
     }
 };

@@ -5,6 +5,7 @@ const {
     MessageFlags
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
+const { addDatabaseFooter } = require('../utils/database_footer.js');
 
 function parseJournalTimestamp(value) {
     const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2})h$/i);
@@ -63,9 +64,12 @@ module.exports = {
         } catch (error) {
             await interaction.editReply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor(0xffa500)
-                        .setDescription(error.message)
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0xffa500)
+                            .setDescription(error.message),
+                        db
+                    )
                 ]
             });
             return;
@@ -80,11 +84,14 @@ module.exports = {
         });
         await interaction.editReply({
             embeds: [
-                new EmbedBuilder()
-                    .setColor(deleted ? 0x00ff00 : 0xffa500)
-                    .setDescription(deleted
-                        ? 'Your note was deleted.'
-                        : 'No note you wrote about that player was found at that timestamp.')
+                await addDatabaseFooter(
+                    new EmbedBuilder()
+                        .setColor(deleted ? 0x00ff00 : 0xffa500)
+                        .setDescription(deleted
+                            ? 'Your note was deleted.'
+                            : 'No note you wrote about that player was found at that timestamp.'),
+                    db
+                )
             ]
         });
     }

@@ -8,6 +8,7 @@ const {
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
 const { createJournalEmbed } = require('../utils/journal_embed.js');
+const { addDatabaseFooter } = require('../utils/database_footer.js');
 
 async function addAndShowJournal(interaction, db, player, playerName, note, isGood) {
     try {
@@ -23,9 +24,12 @@ async function addAndShowJournal(interaction, db, player, playerName, note, isGo
         if (error.code === 'NOTE_COOLDOWN') {
             await interaction.editReply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor(0xffa500)
-                        .setDescription(error.message)
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0xffa500)
+                            .setDescription(error.message),
+                        db
+                    )
                 ],
                 components: []
             });
@@ -107,7 +111,10 @@ module.exports = {
                 .setLabel('Abort')
                 .setStyle(ButtonStyle.Danger)
         );
-        await interaction.editReply({ embeds: [warning], components: [row] });
+        await interaction.editReply({
+            embeds: [await addDatabaseFooter(warning, db)],
+            components: [row]
+        });
 
         const message = await interaction.fetchReply();
         let confirmation;
@@ -125,9 +132,12 @@ module.exports = {
         if (!confirmation) {
             await interaction.editReply({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor(0xffa500)
-                        .setDescription('Confirmation expired; no note was added.')
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0xffa500)
+                            .setDescription('Confirmation expired; no note was added.'),
+                        db
+                    )
                 ],
                 components: []
             });
@@ -136,9 +146,12 @@ module.exports = {
         if (confirmation.customId === `note-abort:${interaction.id}`) {
             await confirmation.update({
                 embeds: [
-                    new EmbedBuilder()
-                        .setColor(0x808080)
-                        .setDescription('Note cancelled.')
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0x808080)
+                            .setDescription('Note cancelled.'),
+                        db
+                    )
                 ],
                 components: []
             });

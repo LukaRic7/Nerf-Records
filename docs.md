@@ -15,7 +15,9 @@
 > as `DD/MM/YY HHh` (for example, `21/11/26 21h`).
 
 In a direct message with the bot, the authorized owner can type `.refreshdb` to force a refresh
-of all leaderboard sources. The bot reports successful and failed sources in an embed.
+of all leaderboard sources. The bot reports successful and failed sources in an embed. The
+Discord application's **Message Content Intent** must be enabled in the Developer Portal for
+the bot to read the command text.
 
 ## Nerf API (no cookie needed)
 

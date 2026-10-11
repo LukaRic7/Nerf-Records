@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const { addDatabaseFooter } = require('./database_footer.js');
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
@@ -21,23 +22,11 @@ function rankValue(rank, value, suffix) {
     return `**#${formatNumber(rank)}** → ${formatNumber(value)} ${suffix}`;
 }
 
-function formatDatabaseAge(timestamp) {
-    if (!timestamp) return 'not yet updated';
-    const milliseconds = Math.max(0, Date.now() - Date.parse(timestamp));
-    if (!Number.isFinite(milliseconds)) return 'unknown';
-    const totalMinutes = Math.floor(milliseconds / 60_000);
-    const days = Math.floor(totalMinutes / 1440);
-    const hours = Math.floor((totalMinutes % 1440) / 60);
-    const minutes = totalMinutes % 60;
-    return `${days}d ${hours}h ${minutes}m`;
-}
-
 async function createJournalEmbed(db, player, identifier) {
     const displayName = player?.steam_name ?? identifier;
-    const [leaderboard, notes, metadata] = await Promise.all([
+    const [leaderboard, notes] = await Promise.all([
         player ? db.getLeaderboardEntry(player.steam_id) : null,
-        db.getNotesForPlayer(player, displayName),
-        db.getMetadata()
+        db.getNotesForPlayer(player, displayName)
     ]);
 
     const noteLines = notes.map(note => {
@@ -75,7 +64,6 @@ async function createJournalEmbed(db, player, identifier) {
             + `\`\`\`diff\n${notesText}\n\`\`\``
         )
         .setTimestamp(new Date())
-        .setFooter({ text: `DB age: ${formatDatabaseAge(metadata.leaderboard_updated_at)}` })
         .addFields(
             {
                 name: '🔪  Kills',
@@ -112,7 +100,7 @@ async function createJournalEmbed(db, player, identifier) {
         embed.setColor(0xffa500)
             .setTitle('Player not found in the Nerf database');
     }
-    return embed;
+    return addDatabaseFooter(embed, db);
 }
 
 module.exports = { createJournalEmbed, formatTimestamp };
