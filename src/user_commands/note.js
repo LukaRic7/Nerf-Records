@@ -68,9 +68,7 @@ module.exports = {
             .setRequired(true)
         )
         .setContexts(
-            InteractionContextType.Guild,
-            InteractionContextType.BotDM,
-            InteractionContextType.PrivateChannel
+            InteractionContextType.BotDM
         ),
 
     async execute(interaction) {

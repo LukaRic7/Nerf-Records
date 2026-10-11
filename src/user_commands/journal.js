@@ -19,9 +19,7 @@ module.exports = {
             .setMaxLength(100)
         )
         .setContexts(
-            InteractionContextType.Guild,
-            InteractionContextType.BotDM,
-            InteractionContextType.PrivateChannel
+            InteractionContextType.BotDM
         ),
 
     async execute(interaction) {
