@@ -18,7 +18,7 @@ function formatNumber(value) {
 }
 
 function rankValue(rank, value, suffix) {
-    if (rank === null || rank === undefined) return '**#—** → Not ranked';
+    if (rank === null || rank === undefined) return '**#-** → Not ranked';
     return `**#${formatNumber(rank)}** → ${formatNumber(value)} ${suffix}`;
 }
 

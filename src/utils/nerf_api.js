@@ -1,5 +1,5 @@
 const API_BASE_URL = 'https://api.nerfofficial.org/';
-const LEADERBOARD_LIMIT = 200_000;
+const LEADERBOARD_LIMIT = 300_000;
 const REFRESH_INTERVAL_MS = 12 * 60 * 60 * 1000;
 
 const SOURCES = [
@@ -20,7 +20,7 @@ function getDiscordIdFromAvatar(avatarUrl) {
 async function fetchLeaderboard(source) {
     console.log(`[Nerf API] Fetching ${source}`);
     const response = await fetch(new URL(source.path, API_BASE_URL), {
-        signal: AbortSignal.timeout(150_000)
+        signal: AbortSignal.timeout(600_000)
     });
     if (!response.ok) {
         throw new Error(`${source.key} leaderboard returned HTTP ${response.status}`);

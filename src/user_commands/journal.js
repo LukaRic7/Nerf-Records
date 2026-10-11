@@ -49,7 +49,7 @@ module.exports = {
         const suggestions = await db.getPlayerSuggestions(identifier);
         const suggestionText = suggestions.length
             ? suggestions.map(candidate =>
-                `• **${candidate.steam_name}** — Steam ID: \`${candidate.steam_id}\``
+                `• **${candidate.steam_name}** - Steam ID: \`${candidate.steam_id}\``
             ).join('\n')
             : 'No similar players were found.';
         const embed = new EmbedBuilder()

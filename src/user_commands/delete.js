@@ -29,7 +29,7 @@ function parseJournalTimestamp(value) {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('delete')
-        .setDescription('Delete one of your notes from a player’s journal.')
+        .setDescription("Delete one of your notes from a player's journal.")
         .addStringOption(option => option
             .setName('player_name')
             .setDescription('Steam name/ID or Discord name/ID used for the player.')

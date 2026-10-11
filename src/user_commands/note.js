@@ -57,7 +57,7 @@ module.exports = {
         )
         .addStringOption(option => option
             .setName('note')
-            .setDescription('The message to add to this player’s journal.')
+            .setDescription("The message to add to this player's journal.")
             .setRequired(true)
             .setMinLength(5)
             .setMaxLength(80)
@@ -90,7 +90,7 @@ module.exports = {
         const suggestions = await db.getPlayerSuggestions(playerName);
         const suggestionText = suggestions.length
             ? suggestions.map(candidate =>
-                `• **${candidate.steam_name}** — Steam ID: \`${candidate.steam_id}\``
+                `• **${candidate.steam_name}** - Steam ID: \`${candidate.steam_id}\``
             ).join('\n')
             : 'No similar players were found.';
         const warning = new EmbedBuilder()
