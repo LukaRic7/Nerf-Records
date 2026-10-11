@@ -1,0 +1,25 @@
+{
+  "name": "nerf-records",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LukaRic7/Nerf-Records.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LukaRic7/Nerf-Records/issues"
+  },
+  "homepage": "https://github.com/LukaRic7/Nerf-Records#readme",
+  "description": "",
+  "dependencies": {
+    "discord.js": "^14.27.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}
