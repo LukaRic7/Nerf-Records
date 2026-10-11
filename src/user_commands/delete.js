@@ -68,7 +68,7 @@ module.exports = {
                             .setDescription(error.message),
                         db
                     )
-                ]
+                ], flags: MessageFlags.Ephemeral
             });
             return;
         }
@@ -90,7 +90,7 @@ module.exports = {
                             : 'No note you wrote about that player was found at that timestamp.'),
                     db
                 )
-            ]
+            ], flags: MessageFlags.Ephemeral
         });
     }
 };

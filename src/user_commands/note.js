@@ -31,7 +31,7 @@ async function addAndShowJournal(interaction, db, player, playerName, note, isGo
                         db
                     )
                 ],
-                components: []
+                components: [], flags: MessageFlags.Ephemeral
             });
             return;
         }
@@ -111,7 +111,7 @@ module.exports = {
         );
         await interaction.editReply({
             embeds: [await addDatabaseFooter(warning, db)],
-            components: [row]
+            components: [row], flags: MessageFlags.Ephemeral
         });
 
         const message = await interaction.fetchReply();
@@ -137,7 +137,7 @@ module.exports = {
                         db
                     )
                 ],
-                components: []
+                components: [], flags: MessageFlags.Ephemeral
             });
             return;
         }
@@ -151,7 +151,7 @@ module.exports = {
                         db
                     )
                 ],
-                components: []
+                components: [], flags: MessageFlags.Ephemeral
             });
             return;
         }

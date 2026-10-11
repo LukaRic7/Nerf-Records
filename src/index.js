@@ -5,7 +5,8 @@ const {
     MessageFlags,
     EmbedBuilder,
     Partials,
-    ChannelType
+    ChannelType,
+    MessageFlags
 } = require('discord.js');
 const fs = require('node:fs');
 const path = require('path');
@@ -66,7 +67,7 @@ client.on('interactionCreate', async (interaction) => {
             ? [await addDatabaseFooter(embed, interaction.client.db)]
             : [embed];
         if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ embeds: replyEmbeds, components: [] });
+            await interaction.editReply({ embeds: replyEmbeds, components: [], flags: MessageFlags.Ephemeral });
         } else {
             await interaction.reply({
                 embeds: replyEmbeds,
@@ -100,7 +101,7 @@ client.on('messageCreate', async message => {
                         .setDescription('Fetching all Nerf leaderboard sources.'),
                     message.client.db
                 )
-            ]
+            ], flags: MessageFlags.Ephemeral
         });
         const result = await NerfApi.refreshDatabase(message.client.db);
         const embed = new EmbedBuilder()
@@ -116,7 +117,7 @@ client.on('messageCreate', async message => {
                     : [])
             ].join('\n'));
         await statusMessage.edit({
-            embeds: [await addDatabaseFooter(embed, message.client.db)]
+            embeds: [await addDatabaseFooter(embed, message.client.db)], flags: MessageFlags.Ephemeral
         });
     } catch (error) {
         console.error('[Commands] .refreshdb failed:', error);

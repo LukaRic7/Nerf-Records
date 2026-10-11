@@ -58,7 +58,7 @@ module.exports = {
                 + `Closest matches:\n${suggestionText}`
             );
         await interaction.editReply({
-            embeds: [await addDatabaseFooter(embed, db)]
+            embeds: [await addDatabaseFooter(embed, db)], flags: MessageFlags.Ephemeral
         });
     }
 };
