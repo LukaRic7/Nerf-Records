@@ -18,12 +18,7 @@ const { addDatabaseFooter } = require('./utils/database_footer.js');
 const REFRESH_COMMAND_USER_ID = '1212173699281592360';
 
 // Create the client instance
-const client = new Client({
-    intents: [
-        GatewayIntentBits.DirectMessages
-    ],
-    partials: [Partials.Channel]
-});
+const client = new Client({ intents: [GatewayIntentBits.DirectMessages] });
 
 // Load commands into a collection
 client.commands = new Collection();
