@@ -51,7 +51,7 @@ module.exports = {
         .setDescription('Add a good or bad note about a player.')
         .addStringOption(option => option
             .setName('player_name')
-            .setDescription('Steam name/ID or Discord name/ID.')
+            .setDescription('Steam name, Steam ID, Discord name, or Discord ID (also accepts aliases).')
             .setRequired(true)
             .setMinLength(1)
             .setMaxLength(100)
