@@ -1,12 +1,4 @@
-const {
-    Client,
-    GatewayIntentBits,
-    Collection,
-    MessageFlags,
-    EmbedBuilder,
-    Partials,
-    ChannelType
-} = require('discord.js');
+const { Client, GatewayIntentBits, Collection, MessageFlags, EmbedBuilder, ChannelType } = require('discord.js');
 const fs = require('node:fs');
 const path = require('path');
  
@@ -18,7 +10,7 @@ const { addDatabaseFooter } = require('./utils/database_footer.js');
 const REFRESH_COMMAND_USER_ID = '1212173699281592360';
 
 // Create the client instance
-const client = new Client({ intents: [GatewayIntentBits.DirectMessages] });
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
 // Load commands into a collection
 client.commands = new Collection();
