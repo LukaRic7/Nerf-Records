@@ -427,6 +427,7 @@ class DatabaseManager {
 
         await this.db.exec('BEGIN IMMEDIATE');
         try {
+            const skippedLeaderboardSteamIds = new Set();
             const playerStatement = await this.db.prepare(`
                 INSERT INTO players (
                     steam_id, steam_name, discord_id, discord_name, discord_avatar_url
@@ -444,11 +445,30 @@ class DatabaseManager {
                     if (!player.steam_id || !player.steam_name) {
                         throw new Error('Each player requires steam_id and steam_name');
                     }
-                    await playerStatement.run(
-                        String(player.steam_id), player.steam_name,
-                        player.discord_id ?? null, player.discord_name ?? null,
-                        player.discord_avatar_url ?? null
-                    );
+                    try {
+                        await playerStatement.run(
+                            String(player.steam_id), player.steam_name,
+                            player.discord_id ?? null, player.discord_name ?? null,
+                            player.discord_avatar_url ?? null
+                        );
+                    } catch (error) {
+                        if (error.code !== 'SQLITE_CONSTRAINT' ||
+                            !error.message.includes('UNIQUE constraint failed: players.discord_id')) {
+                            throw error;
+                        }
+                        const existingPlayer = await this.db.get(
+                            'SELECT steam_id FROM players WHERE steam_id = ?',
+                            [String(player.steam_id)]
+                        );
+                        if (!existingPlayer) {
+                            skippedLeaderboardSteamIds.add(String(player.steam_id));
+                        }
+                        console.warn(
+                            `[Nerf API] Skipping player ${player.steam_id}` +
+                            `${existingPlayer ? '' : ' and its leaderboard rows'}: Discord ID ` +
+                            `${player.discord_id} is already linked to another player.`
+                        );
+                    }
                 }
             } finally {
                 await playerStatement.finalize();
@@ -460,6 +480,7 @@ class DatabaseManager {
                     if (!entry.steam_id) {
                         throw new Error('Each leaderboard entry requires steam_id');
                     }
+                    if (skippedLeaderboardSteamIds.has(String(entry.steam_id))) continue;
 
                     const fields = Object.keys(entry).filter(key => key !== 'steam_id');
                     if (fields.length === 0) continue;

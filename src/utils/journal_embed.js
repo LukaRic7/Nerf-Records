@@ -3,7 +3,10 @@ const { addDatabaseFooter } = require('./database_footer.js');
 
 function formatTimestamp(timestamp) {
     const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) throw new Error(`Invalid timestamp: ${timestamp}`);
+    if (Number.isNaN(date.getTime())) {
+        throw new Error(`Invalid timestamp: ${timestamp}`);
+    }
+
     const pad = value => String(value).padStart(2, '0');
     return `${pad(date.getUTCDate())}/${pad(date.getUTCMonth() + 1)}/`
         + `${String(date.getUTCFullYear()).slice(-2)} ${pad(date.getUTCHours())}h`;
@@ -97,8 +100,7 @@ async function createJournalEmbed(db, player, identifier) {
         );
 
     if (!player) {
-        embed.setColor(0xffa500)
-            .setTitle('Player not found in the Nerf database');
+        embed.setColor(0xffa500).setTitle('Player not found in the Nerf database');
     }
     return addDatabaseFooter(embed, db);
 }

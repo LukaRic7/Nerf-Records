@@ -18,10 +18,7 @@ function getDiscordIdFromAvatar(avatarUrl) {
 }
 
 async function fetchLeaderboard(source) {
-    console.log(`[Nerf API] Fetching ${source}`);
-    const response = await fetch(new URL(source.path, API_BASE_URL), {
-        signal: AbortSignal.timeout(600_000)
-    });
+    const response = await fetch(new URL(source.path, API_BASE_URL), { signal: AbortSignal.timeout(600_000) });
     if (!response.ok) {
         throw new Error(`${source.key} leaderboard returned HTTP ${response.status}`);
     }
@@ -30,6 +27,7 @@ async function fetchLeaderboard(source) {
     if (payload.success !== true || !Array.isArray(payload.leaderboard)) {
         throw new Error(`${source.key} leaderboard returned an invalid response`);
     }
+
     return payload.leaderboard;
 }
 
@@ -38,14 +36,15 @@ function numericValue(value, label) {
     if (!Number.isFinite(number) || number < 0) {
         throw new Error(`Invalid ${label} value from Nerf API`);
     }
+
     return Math.round(number);
 }
 
 async function refreshLeaderboards(db, sources) {
     const results = await Promise.allSettled(sources.map(async source => ({
-        source,
-        rows: await fetchLeaderboard(source)
+        source, rows: await fetchLeaderboard(source)
     })));
+
     const successful = [];
     const failedSources = [];
     for (let index = 0; index < results.length; index++) {
@@ -81,7 +80,6 @@ async function refreshLeaderboards(db, sources) {
     const players = new Map();
     const leaderboard = new Map();
     const steamIdByDiscordId = new Map();
-
     for (const { source, rows } of successful) {
         for (const row of rows) {
             if (source.key === 'meat' || source.key === 'bones') continue;
@@ -92,8 +90,7 @@ async function refreshLeaderboards(db, sources) {
 
             const steamId = String(row.steamId);
             const avatarUrl = row.discordAvatar ?? null;
-            const discordId = (row.discordId && String(row.discordId))
-                || getDiscordIdFromAvatar(avatarUrl);
+            const discordId = (row.discordId && String(row.discordId)) || getDiscordIdFromAvatar(avatarUrl);
             const discord = discordId ? discordPlayers.get(discordId) : null;
             const player = players.get(steamId) ?? { steam_id: steamId };
             if (!player.steam_name || source.key === 'kills') {
@@ -101,8 +98,7 @@ async function refreshLeaderboards(db, sources) {
             }
             player.discord_id = discordId ?? player.discord_id ?? null;
             player.discord_name = discord?.discord_name ?? player.discord_name ?? null;
-            player.discord_avatar_url = avatarUrl ?? discord?.discord_avatar_url
-                ?? player.discord_avatar_url ?? null;
+            player.discord_avatar_url = avatarUrl ?? discord?.discord_avatar_url ?? player.discord_avatar_url ?? null;
             players.set(steamId, player);
             if (player.discord_id) steamIdByDiscordId.set(player.discord_id, steamId);
 
@@ -119,9 +115,7 @@ async function refreshLeaderboards(db, sources) {
                     entry.babies = numericValue(row.babies, 'babies');
                     entry.nest_points = numericValue(row.points, 'nest points');
                     entry.most_nested_dino = row.mostNestedDino ?? null;
-                    entry.most_nested_count = numericValue(
-                        row.mostNestedCount ?? 0, 'most nested count'
-                    );
+                    entry.most_nested_count = numericValue(row.mostNestedCount ?? 0, 'most nested count');
                     entry.nesting_rank = numericValue(row.rank, 'nesting rank');
                     break;
                 case 'playtime':
@@ -133,16 +127,12 @@ async function refreshLeaderboards(db, sources) {
         }
     }
 
-    const unmatchedDiscordIds = [...discordPlayers.keys()]
-        .filter(discordId => !steamIdByDiscordId.has(discordId));
+    const unmatchedDiscordIds = [...discordPlayers.keys()].filter(discordId => !steamIdByDiscordId.has(discordId));
     const existingPlayers = await db.getPlayersByDiscordIds(unmatchedDiscordIds);
     for (const player of existingPlayers) {
         players.set(player.steam_id, player);
         steamIdByDiscordId.set(player.discord_id, player.steam_id);
-        leaderboard.set(player.steam_id, {
-            steam_id: player.steam_id,
-            discord_id: player.discord_id
-        });
+        leaderboard.set(player.steam_id, { steam_id: player.steam_id, discord_id: player.discord_id });
     }
 
     for (const { source, rows } of successful) {
@@ -151,6 +141,7 @@ async function refreshLeaderboards(db, sources) {
             const discordId = String(row.discordId ?? '');
             const steamId = steamIdByDiscordId.get(discordId);
             if (!steamId) continue;
+
             const entry = leaderboard.get(steamId);
             if (source.key === 'meat') {
                 entry.meat = numericValue(row.meat, 'meat');
@@ -167,9 +158,7 @@ async function refreshLeaderboards(db, sources) {
     const leaderboardRows = [...leaderboard.values()];
     await db.upsertLeaderboardSnapshot(playerRows, leaderboardRows, updatedSources);
     await db.markLeaderboardSourcesStale(failedSources);
-    console.log(
-        `[Nerf API] Refreshed ${updatedSources.join(', ')}; upserted ${playerRows.length} players.`
-    );
+    console.log(`[Nerf API] Refreshed ${updatedSources.join(', ')}; upserted ${playerRows.length} players.`);
     return { updatedSources, failedSources, playerCount: playerRows.length };
 }
 
@@ -183,6 +172,7 @@ async function refreshIfStale(db) {
         const updatedAt = metadata[`${source.key}_updated_at`];
         return !updatedAt || Date.now() - Date.parse(updatedAt) >= REFRESH_INTERVAL_MS;
     });
+    
     if (staleSources.length === 0) return;
     if (refreshInProgress) {
         if (!metadata.leaderboard_updated_at) await refreshInProgress;
@@ -224,8 +214,4 @@ async function refreshDatabase(db) {
     }
 }
 
-module.exports = {
-    getDiscordIdFromAvatar,
-    refreshIfStale,
-    refreshDatabase
-};
+module.exports = { getDiscordIdFromAvatar, refreshIfStale, refreshDatabase };

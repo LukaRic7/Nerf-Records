@@ -25,7 +25,7 @@ client.once('clientReady', async () => {
     await db.init();
     client.db = db;
 
-    console.log(`Logged in as: "${client.user.tag}"`);
+    console.log(`[Bot] Logged in as: "${client.user.tag}"`);
 });
 
 // Handle bot interactions
@@ -33,7 +33,7 @@ client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
 
     // Log the entire slash command used
-    const optionValues = interaction.options.data.map(option => option.value).join(' ');
+    const optionValues = interaction.options.data.map(option => option.value).join(' | ');
     const username = interaction.user.username;
     const stringCommand = `/${interaction.commandName} ${optionValues}`;
     console.log(`[Commands] "${username}" => "${stringCommand}"`);
@@ -46,30 +46,28 @@ client.on('interactionCreate', async (interaction) => {
         await command.execute(interaction);
     } catch (error) {
         console.error(`[Commands] /${interaction.commandName} failed:`, error);
+
         const embed = new EmbedBuilder()
             .setColor(0xff0000)
             .setDescription('The command could not be completed. Please try again later.');
+
         const replyEmbeds = interaction.client.db
             ? [await addDatabaseFooter(embed, interaction.client.db)]
             : [embed];
+
         if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({ embeds: replyEmbeds, components: [], flags: MessageFlags.Ephemeral });
-        } else {
-            await interaction.reply({
-                embeds: replyEmbeds,
-                flags: MessageFlags.Ephemeral
+            await interaction.editReply({
+                embeds: replyEmbeds, components: [], flags: MessageFlags.Ephemeral
             });
+        } else {
+            await interaction.reply({ embeds: replyEmbeds, flags: MessageFlags.Ephemeral });
         }
     }
 });
 
 client.on('messageCreate', async message => {
-    if (
-        message.author.id !== REFRESH_COMMAND_USER_ID
-        || message.author.bot
-        || message.channel.type !== ChannelType.DM
-        || message.content.trim() !== '.refreshdb'
-    ) {
+    if (message.author.id !== REFRESH_COMMAND_USER_ID || message.author.bot
+        || message.channel.type !== ChannelType.DM || message.content.trim() !== '.refreshdb') {
         return;
     }
 
@@ -92,9 +90,7 @@ client.on('messageCreate', async message => {
         const result = await NerfApi.refreshDatabase(message.client.db);
         const embed = new EmbedBuilder()
             .setColor(result.failedSources.length ? 0xffa500 : 0x00ff00)
-            .setTitle(result.failedSources.length
-                ? 'Database refreshed with errors'
-                : 'Database refreshed')
+            .setTitle(result.failedSources.length ? 'Database refreshed with errors' : 'Database refreshed')
             .setDescription([
                 `Updated: ${result.updatedSources.join(', ') || 'none'}`,
                 `Players upserted: ${result.playerCount}`,
