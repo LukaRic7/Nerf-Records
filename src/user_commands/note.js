@@ -48,7 +48,7 @@ async function addAndShowJournal(interaction, db, player, playerName, note, isGo
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('note')
-        .setDescription('Add a good or bad note about a player.')
+        .setDescription('Add a good or bad note about a player. Visible for all!')
         .addStringOption(option => option
             .setName('player_name')
             .setDescription('Steam name, Steam ID, Discord name, or Discord ID (also accepts aliases).')
@@ -69,7 +69,8 @@ module.exports = {
             .setRequired(true)
         )
         .setContexts(
-            InteractionContextType.BotDM
+            InteractionContextType.BotDM,
+            InteractionContextType.PrivateChannel
         ),
 
     async execute(interaction) {
@@ -87,20 +88,30 @@ module.exports = {
         }
 
         const suggestions = await db.getPlayerSuggestions(playerName);
-        const suggestionText = suggestions.length
-            ? suggestions.map(candidate =>
-                `• **${candidate.steam_name}** - Steam ID: \`${candidate.steam_id}\``
-            ).join('\n')
-            : 'No similar players were found.';
         const warning = new EmbedBuilder()
             .setColor(0xffa500)
             .setTitle('Player not found in the Nerf database')
             .setDescription(
                 `The note you entered:\n> ${note.replace(/[\r\n]/g, ' ')}\n\n`
-                + 'Would you still like to enter this note? You can also try one of these '
-                + `players and copy their Steam ID:\n${suggestionText}`
+                + (suggestions.length
+                    ? 'Choose a suggested player to add the note to them, or enter it for '
+                        + 'the unmatched name.'
+                    : 'Would you still like to enter this note for the unmatched name?')
             );
-        const row = new ActionRowBuilder().addComponents(
+        const suggestionRows = suggestions.length
+            ? [new ActionRowBuilder().addComponents(...suggestions.map((candidate, index) => {
+                const label = `${candidate.steam_name} - ${candidate.steam_id}`;
+                const truncatedLabel = `${candidate.steam_name.slice(
+                    0,
+                    Math.max(0, 74 - candidate.steam_id.length)
+                )}... - ${candidate.steam_id}`;
+                return new ButtonBuilder()
+                    .setCustomId(`note-player:${interaction.id}:${index}`)
+                    .setLabel(label.length <= 80 ? label : truncatedLabel)
+                    .setStyle(ButtonStyle.Primary);
+            }))]
+            : [];
+        const actionRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`note-continue:${interaction.id}`)
                 .setLabel('Yes, enter note')
@@ -112,7 +123,8 @@ module.exports = {
         );
         await interaction.editReply({
             embeds: [await addDatabaseFooter(warning, db)],
-            components: [row], flags: MessageFlags.Ephemeral
+            components: [...suggestionRows, actionRow],
+            flags: MessageFlags.Ephemeral
         });
 
         const message = await interaction.fetchReply();
@@ -120,8 +132,13 @@ module.exports = {
         try {
             confirmation = await message.awaitMessageComponent({
                 filter: component => component.user.id === interaction.user.id
-                    && [`note-continue:${interaction.id}`, `note-abort:${interaction.id}`]
-                        .includes(component.customId),
+                    && (
+                        [`note-continue:${interaction.id}`, `note-abort:${interaction.id}`]
+                            .includes(component.customId)
+                        || suggestions.some((_, index) =>
+                            component.customId === `note-player:${interaction.id}:${index}`
+                        )
+                    ),
                 time: 60_000
             });
         } catch (error) {
@@ -158,6 +175,19 @@ module.exports = {
         }
 
         await confirmation.deferUpdate();
+        if (confirmation.customId.startsWith(`note-player:${interaction.id}:`)) {
+            const selectedIndex = Number(confirmation.customId.split(':').at(-1));
+            const selectedPlayer = suggestions[selectedIndex];
+            await addAndShowJournal(
+                interaction,
+                db,
+                selectedPlayer,
+                selectedPlayer.steam_name,
+                note,
+                isGood
+            );
+            return;
+        }
         await addAndShowJournal(interaction, db, null, playerName, note, isGood);
     }
 };

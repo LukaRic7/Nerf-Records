@@ -45,7 +45,8 @@ module.exports = {
             .setMaxLength(20)
         )
         .setContexts(
-            InteractionContextType.BotDM
+            InteractionContextType.BotDM,
+            InteractionContextType.PrivateChannel
         ),
 
     async execute(interaction) {
@@ -75,10 +76,7 @@ module.exports = {
 
         const player = await db.getPlayerByIdentifier(playerName);
         const deleted = await db.deleteNote({
-            authorId: interaction.user.id,
-            player,
-            playerName,
-            createdAt
+            authorId: interaction.user.id, player, playerName, createdAt
         });
         await interaction.editReply({
             embeds: [

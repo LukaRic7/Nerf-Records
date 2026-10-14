@@ -2,6 +2,9 @@ const {
     SlashCommandBuilder,
     InteractionContextType,
     EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
     MessageFlags
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
@@ -20,7 +23,8 @@ module.exports = {
             .setMaxLength(100)
         )
         .setContexts(
-            InteractionContextType.BotDM
+            InteractionContextType.BotDM,
+            InteractionContextType.PrivateChannel
         ),
 
     async execute(interaction) {
@@ -46,20 +50,72 @@ module.exports = {
         }
 
         const suggestions = await db.getPlayerSuggestions(identifier);
-        const suggestionText = suggestions.length
-            ? suggestions.map(candidate =>
-                `• **${candidate.steam_name}** - Steam ID: \`${candidate.steam_id}\``
-            ).join('\n')
-            : 'No similar players were found.';
         const embed = new EmbedBuilder()
             .setColor(0xffa500)
             .setTitle('Player not found')
             .setDescription(
                 `No Nerf player matched \`${identifier.replace(/[`<>]/g, '')}\`.\n\n`
-                + `Closest matches:\n${suggestionText}`
+                + (suggestions.length
+                    ? 'Choose one of the closest matches below to view their journal.'
+                    : 'No similar players were found.')
             );
+        const components = suggestions.length
+            ? [new ActionRowBuilder().addComponents(...suggestions.map((candidate, index) => {
+                const label = `${candidate.steam_name} - ${candidate.steam_id}`;
+                const truncatedLabel = `${candidate.steam_name.slice(
+                    0,
+                    Math.max(0, 74 - candidate.steam_id.length)
+                )}... - ${candidate.steam_id}`;
+                return new ButtonBuilder()
+                    .setCustomId(`journal-player:${interaction.id}:${index}`)
+                    .setLabel(label.length <= 80 ? label : truncatedLabel)
+                    .setStyle(ButtonStyle.Primary);
+            }))]
+            : [];
         await interaction.editReply({
-            embeds: [await addDatabaseFooter(embed, db)], flags: MessageFlags.Ephemeral
+            embeds: [await addDatabaseFooter(embed, db)],
+            components,
+            flags: MessageFlags.Ephemeral
+        });
+
+        if (!suggestions.length) return;
+
+        const message = await interaction.fetchReply();
+        let selection;
+        try {
+            selection = await message.awaitMessageComponent({
+                filter: component => component.user.id === interaction.user.id
+                    && suggestions.some((_, index) =>
+                        component.customId === `journal-player:${interaction.id}:${index}`
+                    ),
+                time: 60_000
+            });
+        } catch (error) {
+            if (error.name !== 'InteractionCollectorError') throw error;
+        }
+
+        if (!selection) {
+            await interaction.editReply({
+                embeds: [
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0xffa500)
+                            .setDescription('Selection expired; no player was selected.'),
+                        db
+                    )
+                ],
+                components: [],
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
+
+        const selectedIndex = Number(selection.customId.split(':').at(-1));
+        const selectedPlayer = suggestions[selectedIndex];
+        await selection.deferUpdate();
+        await interaction.editReply({
+            embeds: [await createJournalEmbed(db, selectedPlayer, selectedPlayer.steam_name)],
+            components: []
         });
     }
 };
