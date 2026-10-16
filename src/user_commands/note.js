@@ -74,7 +74,7 @@ module.exports = {
             .setDescription("The message to add to this player's journal.")
             .setRequired(true)
             .setMinLength(5)
-            .setMaxLength(80)
+            .setMaxLength(100)
         )
         .addBooleanOption(option => option
             .setName('is_good')
