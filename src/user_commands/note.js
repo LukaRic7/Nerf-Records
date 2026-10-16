@@ -11,6 +11,19 @@ const NerfApi = require('../utils/nerf_api.js');
 const { createJournalEmbed } = require('../utils/journal_embed.js');
 const { addDatabaseFooter } = require('../utils/database_footer.js');
 
+function formatPlayerButtonLabel(player) {
+    const discordName = player.discord_name || player.discord_id || 'Unknown';
+    const shortenedDiscordName = discordName.length > 26
+        ? `${discordName.slice(0, 23)}...`
+        : discordName;
+    const prefix = `D: ${shortenedDiscordName} | S: `;
+    const availableSteamNameLength = 80 - prefix.length;
+    const steamName = player.steam_name.length > availableSteamNameLength
+        ? `${player.steam_name.slice(0, availableSteamNameLength - 3)}...`
+        : player.steam_name;
+    return `${prefix}${steamName}`;
+}
+
 async function addAndShowJournal(interaction, db, player, playerName, note, isGood) {
     try {
         await db.addNote({
@@ -100,14 +113,9 @@ module.exports = {
             );
         const suggestionRows = suggestions.length
             ? [new ActionRowBuilder().addComponents(...suggestions.map((candidate, index) => {
-                const label = `${candidate.steam_name} - ${candidate.steam_id}`;
-                const truncatedLabel = `${candidate.steam_name.slice(
-                    0,
-                    Math.max(0, 74 - candidate.steam_id.length)
-                )}... - ${candidate.steam_id}`;
                 return new ButtonBuilder()
                     .setCustomId(`note-player:${interaction.id}:${index}`)
-                    .setLabel(label.length <= 80 ? label : truncatedLabel)
+                    .setLabel(formatPlayerButtonLabel(candidate))
                     .setStyle(ButtonStyle.Primary);
             }))]
             : [];
@@ -115,7 +123,9 @@ module.exports = {
             new ButtonBuilder()
                 .setCustomId(`note-continue:${interaction.id}`)
                 .setLabel('Yes, enter note')
-                .setStyle(ButtonStyle.Success),
+                .setStyle(ButtonStyle.Success)
+        );
+        const abortRow = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`note-abort:${interaction.id}`)
                 .setLabel('Abort')
@@ -123,7 +133,7 @@ module.exports = {
         );
         await interaction.editReply({
             embeds: [await addDatabaseFooter(warning, db)],
-            components: [...suggestionRows, actionRow],
+            components: [...suggestionRows, actionRow, abortRow],
             flags: MessageFlags.Ephemeral
         });
 

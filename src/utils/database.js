@@ -530,9 +530,10 @@ class DatabaseManager {
                 OR steam_name = ? COLLATE NOCASE
                 OR discord_name = ? COLLATE NOCASE
             ORDER BY CASE
-                WHEN steam_id = ? OR discord_id = ? THEN 0
+                WHEN steam_id = ? THEN 0
                 WHEN steam_name = ? COLLATE NOCASE THEN 1
-                ELSE 2
+                WHEN discord_id = ? THEN 2
+                ELSE 3
             END
             LIMIT 1
         `, [value, value, value, value, value, value, value]);
@@ -565,10 +566,10 @@ class DatabaseManager {
         const rows = await this.db.all(`
             SELECT steam_id, steam_name, discord_id, discord_name
             FROM players
+            WHERE TRIM(steam_name) <> ''
         `);
 
         const distance = (left, right) => {
-            if (Math.abs(left.length - right.length) > 8) return 9;
             let previous = Array.from({ length: right.length + 1 }, (_, i) => i);
             for (let i = 1; i <= left.length; i++) {
                 const current = [i];
@@ -584,13 +585,13 @@ class DatabaseManager {
             return previous[right.length];
         };
 
-        return rows.map(player => {
-            const values = [player.steam_name, player.discord_name, player.steam_id, player.discord_id]
-                .filter(Boolean)
-                .map(value => String(value).toLocaleLowerCase());
+        return rows.filter(player =>
+            typeof player.steam_name === 'string' && player.steam_name.trim()
+        ).map(player => {
+            const steamNameScore = distance(query, String(player.steam_name).toLocaleLowerCase());
             return {
                 ...player,
-                score: Math.min(...values.map(value => distance(query, value)))
+                score: steamNameScore
             };
         }).sort((left, right) =>
             left.score - right.score || left.steam_name.localeCompare(right.steam_name)
@@ -692,6 +693,15 @@ class DatabaseManager {
             WHERE n.to_steam_id IS NULL AND n.to_steam_name = ? COLLATE NOCASE
             ORDER BY n.created_at DESC, n.id DESC
         `, [name]);
+    }
+
+    async getNoteStats() {
+        return this.db.get(`
+            SELECT
+                COUNT(*) AS total_note_count,
+                COUNT(DISTINCT to_steam_id) AS players_with_notes
+            FROM notes
+        `);
     }
 
     async deleteNote({ authorId, player, playerName, createdAt }) {

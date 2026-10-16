@@ -11,6 +11,19 @@ const NerfApi = require('../utils/nerf_api.js');
 const { createJournalEmbed } = require('../utils/journal_embed.js');
 const { addDatabaseFooter } = require('../utils/database_footer.js');
 
+function formatPlayerButtonLabel(player) {
+    const discordName = player.discord_name || player.discord_id || 'Unknown';
+    const shortenedDiscordName = discordName.length > 26
+        ? `${discordName.slice(0, 23)}...`
+        : discordName;
+    const prefix = `D: ${shortenedDiscordName} | S: `;
+    const availableSteamNameLength = 80 - prefix.length;
+    const steamName = player.steam_name.length > availableSteamNameLength
+        ? `${player.steam_name.slice(0, availableSteamNameLength - 3)}...`
+        : player.steam_name;
+    return `${prefix}${steamName}`;
+}
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('journal')
@@ -59,34 +72,36 @@ module.exports = {
                     ? 'Choose one of the closest matches below to view their journal.'
                     : 'No similar players were found.')
             );
-        const components = suggestions.length
-            ? [new ActionRowBuilder().addComponents(...suggestions.map((candidate, index) => {
-                const label = `${candidate.steam_name} - ${candidate.steam_id}`;
-                const truncatedLabel = `${candidate.steam_name.slice(
-                    0,
-                    Math.max(0, 74 - candidate.steam_id.length)
-                )}... - ${candidate.steam_id}`;
-                return new ButtonBuilder()
+        const suggestionRows = suggestions.length
+            ? [new ActionRowBuilder().addComponents(...suggestions.map((candidate, index) =>
+                new ButtonBuilder()
                     .setCustomId(`journal-player:${interaction.id}:${index}`)
-                    .setLabel(label.length <= 80 ? label : truncatedLabel)
-                    .setStyle(ButtonStyle.Primary);
-            }))]
+                    .setLabel(formatPlayerButtonLabel(candidate))
+                    .setStyle(ButtonStyle.Primary)
+            ))]
             : [];
+        const abortRow = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`journal-abort:${interaction.id}`)
+                .setLabel('Abort')
+                .setStyle(ButtonStyle.Danger)
+        );
         await interaction.editReply({
             embeds: [await addDatabaseFooter(embed, db)],
-            components,
+            components: [...suggestionRows, abortRow],
             flags: MessageFlags.Ephemeral
         });
-
-        if (!suggestions.length) return;
 
         const message = await interaction.fetchReply();
         let selection;
         try {
             selection = await message.awaitMessageComponent({
                 filter: component => component.user.id === interaction.user.id
-                    && suggestions.some((_, index) =>
-                        component.customId === `journal-player:${interaction.id}:${index}`
+                    && (
+                        component.customId === `journal-abort:${interaction.id}`
+                        || suggestions.some((_, index) =>
+                            component.customId === `journal-player:${interaction.id}:${index}`
+                        )
                     ),
                 time: 60_000
             });
@@ -101,6 +116,22 @@ module.exports = {
                         new EmbedBuilder()
                             .setColor(0xffa500)
                             .setDescription('Selection expired; no player was selected.'),
+                        db
+                    )
+                ],
+                components: [],
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
+
+        if (selection.customId === `journal-abort:${interaction.id}`) {
+            await selection.update({
+                embeds: [
+                    await addDatabaseFooter(
+                        new EmbedBuilder()
+                            .setColor(0x808080)
+                            .setDescription('Player lookup cancelled.'),
                         db
                     )
                 ],
