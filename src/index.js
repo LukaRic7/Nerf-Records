@@ -8,6 +8,11 @@ const NerfApi = require('./utils/nerf_api.js');
 const { addDatabaseFooter } = require('./utils/database_footer.js');
 
 const REFRESH_COMMAND_USER_ID = '1212173699281592360';
+const WHITELISTED_USER_IDS = [
+    '1212173699281592360', // Luka - Me xd
+    '542648116315291648',  // Wilhelm
+    '821629433601327104',  // Freyja
+]
 
 // Create the client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });

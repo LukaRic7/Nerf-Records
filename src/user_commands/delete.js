@@ -39,7 +39,7 @@ module.exports = {
         )
         .addStringOption(option => option
             .setName('datetime')
-            .setDescription('Timestamp shown beside the note, in DD/MM/YY HHh format.')
+            .setDescription("Timestamp shown beside the note, in 'DD/MM/YY HHh' format. Don't include the brackets.")
             .setRequired(true)
             .setMinLength(12)
             .setMaxLength(20)

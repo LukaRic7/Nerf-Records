@@ -31,6 +31,26 @@ async function fetchLeaderboard(source) {
     return payload.leaderboard;
 }
 
+async function fetchPopulationCounts() {
+    const response = await fetch(
+        new URL('api/population-control?server=eu', API_BASE_URL),
+        { signal: AbortSignal.timeout(15_000) }
+    );
+    if (!response.ok) {
+        throw new Error(`Population endpoint returned HTTP ${response.status}`);
+    }
+
+    const payload = await response.json();
+    if (!Array.isArray(payload.populations)) {
+        throw new Error('Population endpoint returned an invalid response');
+    }
+
+    return new Map(payload.populations.map(population => [
+        population.species,
+        numericValue(population.count, `${population.species} population`)
+    ]));
+}
+
 function numericValue(value, label) {
     const number = Number(value);
     if (!Number.isFinite(number) || number < 0) {
@@ -214,4 +234,9 @@ async function refreshDatabase(db) {
     }
 }
 
-module.exports = { getDiscordIdFromAvatar, refreshIfStale, refreshDatabase };
+module.exports = {
+    getDiscordIdFromAvatar,
+    fetchPopulationCounts,
+    refreshIfStale,
+    refreshDatabase
+};
