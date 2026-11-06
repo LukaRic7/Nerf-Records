@@ -3,7 +3,8 @@ const {
     EmbedBuilder,
     ActionRowBuilder,
     ButtonBuilder,
-    ButtonStyle
+    ButtonStyle,
+    InteractionContextType
 } = require('discord.js');
 const NerfApi = require('../utils/nerf_api.js');
 
@@ -33,7 +34,7 @@ function createWatchEmbed(watch) {
         .setTitle(`${state.emoji} ${watch.status}`)
         .setDescription([
             `**${watch.species}** population: ${population}/${watch.limit}`,
-            `Fetches performed: ${watch.fetches}/${MAX_FETCHES}`,
+            `Fetches performed: **${watch.fetches}**/${MAX_FETCHES}`,
             ...(watch.detail ? [watch.detail] : [])
         ].join('\n'))
         .setFooter({ text: 'EU server' });
@@ -137,7 +138,7 @@ function ensurePollingLoop() {
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('watch')
-        .setDescription('Watch for a dinosaur population opening on the EU server.')
+        .setDescription('Watch for a dinosaur population opening on the EU server only.')
         .addStringOption(option => option
             .setName('dinosaur')
             .setDescription('Dinosaur to watch for an available population slot.')
@@ -146,6 +147,10 @@ module.exports = {
                 name: species,
                 value: species
             })))
+        )
+        .setContexts(
+            InteractionContextType.BotDM,
+            InteractionContextType.PrivateChannel
         ),
 
     async execute(interaction) {
