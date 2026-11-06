@@ -33,8 +33,8 @@ function createWatchEmbed(watch) {
         .setColor(state.color)
         .setTitle(`${state.emoji} ${watch.status}`)
         .setDescription([
-            `**${watch.species}** population: ${population}/${watch.limit}`,
-            `Fetches performed: **${watch.fetches}**/${MAX_FETCHES}`,
+            `**${watch.species}** population: **${population}**/${watch.limit}`,
+            `Fetches performed: ${watch.fetches}/${MAX_FETCHES}`,
             ...(watch.detail ? [watch.detail] : [])
         ].join('\n'))
         .setFooter({ text: 'EU server' });
